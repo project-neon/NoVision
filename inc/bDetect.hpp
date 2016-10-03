@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <math.h>
+#define PI 3.14159265
 
 #include <opencv2/opencv.hpp>
 #include <json/json.h>
@@ -25,11 +27,11 @@ void actionPickCorners(cv::VideoCapture &cap, Json::Value &root);
 void actionConfigureColors(cv::VideoCapture &cap, Json::Value &root);
 void CallBackFunc(int event, int x, int y, int flags, void* userdata);
 void colorDetection(cv::Mat src, cv::Mat &mask, cv::Mat &hsv, cv::Mat &tgt, cv::Scalar colors[], int it);
-void findPos(cv::Mat &src,cv::Mat &tgt, std::vector<std::vector<cv::Point> > &contours,
+cv::Scalar findPos(cv::Mat &src,cv::Mat &tgt, std::vector<std::vector<cv::Point> > &contours,
               std::vector<cv::Vec4i> &hierarchy, Json::Value &root, float k);
 void saveInJson(Json::Value root);
 bool detectCircles(cv::Mat &src,cv::Mat &tgt, std::vector<cv::Vec3f> &circles,
               Json::Value &root,float k);
-void classifyRobots(cv::Mat mask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
+std::vector<cv::Scalar> classifyRobots(cv::Mat mask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
 			  Json::Value &root, float k);
-int matchColorHSV(cv::Scalar color, cv::Scalar colors[]);
+int matchColorHSV(cv::Scalar color, cv::Scalar colors[], std::vector<int> excludecolors);

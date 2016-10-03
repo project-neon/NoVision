@@ -111,14 +111,16 @@ int main(int argc, char *argv[]){
     times[1] = (double)std::chrono::duration_cast<ms>(diff).count();
     //===============================================================================
     start = tick::now();
-    cv::Mat robots;
+    cv::Mat robots_draw;
     std::vector<cv::Vec3f> circles;
-    detectCircles(Gframe,robots, circles, root,FIELD_MM);
+    detectCircles(Gframe,robots_draw, circles, root,FIELD_MM);
     for( size_t i = 0; i < circles.size(); i++ ) {
       cv::Vec3i c = circles[i];
-      cv::circle( robots, cv::Point(c[0], c[1]), c[2], cv::Scalar(0,0,255), 3, cv::LINE_AA);
-      cv::circle( robots, cv::Point(c[0], c[1]), 2, cv::Scalar(0,255,0), 3, cv::LINE_AA);
+      cv::circle( robots_draw, cv::Point(c[0], c[1]), c[2], cv::Scalar(0,0,255), 3, cv::LINE_AA);
+      cv::circle( robots_draw, cv::Point(c[0], c[1]), 2, cv::Scalar(0,255,0), 3, cv::LINE_AA);
     }
+    std::vector<cv::Scalar> robots = classifyRobots(circleMask, circleWarpSize, circles, 
+                                                    colors, root, FIELD_MM);
     finish = tick::now();
     diff = finish - start;
     times[2] = (double)std::chrono::duration_cast<ms>(diff).count();
@@ -144,7 +146,7 @@ int main(int argc, char *argv[]){
     cv::imshow("Frame",Gframe);
     cv::imshow("Bola", tgt);
     cv::imshow("HSV", hsv);
-    cv::imshow("detected circles", robots);
+    cv::imshow("detected circles", robots_draw);
     finish = tick::now();
     diff = finish - start;
     times[3] = (double)std::chrono::duration_cast<ms>(diff).count();
