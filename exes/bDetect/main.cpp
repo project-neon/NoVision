@@ -18,15 +18,10 @@ int main(int argc, char *argv[]){
   int circleWarpSize = root.get("circleWarpSize", 0).asInt();
   // Initialize Static Masks
   // This mask is used to exclude outer area of circles detected in HoughCircles
-  //
   cv::Mat circleMask(circleWarpSize,circleWarpSize,CV_8UC1,cv::Scalar(1,1,1));
   int halfMaskSize = circleWarpSize / 2;
-  cv::circle(circleMask,
-          //center
-          cv::Point(circleWarpSize / 2, circleWarpSize / 2),
-          //radius
-          (int)(circleWarpSize / 2.5),
-          cv::Scalar(255,255,255), -1, 8 , 0 );
+  cv::circle(circleMask, cv::Point(circleWarpSize / 2, circleWarpSize / 2),
+            (int)(circleWarpSize / 2.5), cv::Scalar(255,255,255), -1, 8 , 0 );
 
   // Constant that multiplied by a unit in mm get the size in pc
   float FIELD_MM = (float)(fieldSize.width) / (float)(fieldSizeMM.width);
@@ -35,9 +30,6 @@ int main(int argc, char *argv[]){
   int plotWidth = int(fieldSize.width * 2);
   int plotHeigth = int(fieldSize.height * 2);
   std::vector<int> plots;
-  //plotsLg = None;
-  //plot = np.zeros((plotHeigth, plotWidth, 3), np.uint8)
-  //cv2.resizeWindow("plots", plotWidth, plotHeigth)
 
   changeCameraProp("focus_auto", "0", root);
   changeCameraProp("exposure_auto_priority", "0", root);
@@ -51,11 +43,10 @@ int main(int argc, char *argv[]){
   if (!cap.isOpened())  // check if we succeeded
     return -1;
 
+  //Load configuration from Json file
   cap.set(3, root.get("cameraRes",0)[0].asInt());
   cap.set(4, root.get("cameraRes",0)[1].asInt());
   cv::Size frameSize(cap.get(3), cap.get(4) );
-
-
 
   cv::Scalar color_rgb(0,0,0);
   fieldCorners[0] = cv::Point2f(root.get("fieldCorners",0)[0][0].asFloat(),
@@ -97,61 +88,11 @@ int main(int argc, char *argv[]){
 
   for(;;){
     auto start_total = tick::now();
-    /*
-    if(k == ord('s')):
-      if(SHOW_DISPLAY is True):
-        SHOW_DISPLAY = False;
-      else:
-        SHOW_DISPLAY = True;
-
-    #
-    # Check for "calibrate ball" action
-    #
-    if (k == ord("b")):
-      actionCalibrateBall();
-
-    #
-    # Check for calibrate color action
-    #
-    if(k == ord('c')):
-      actionConfigureColors();
-
-    t = Timing();
-    plots = [];
-    plotsLg = None;
-
-  #############################################################################################################
-
-  #############################################################################################################
-
-
-    # List where all objects get stored
-    objects = [];
-
-    # Capture frame
-    t.start("capture")
-    ret, frame = cap.read()
-    height, width = frame.shape[:2];
-    # plots.append(frame);
-    out = frame;
-    t.end();
-
-    #
-    # Generate Perspective Transform
-    #
-    t.start("wrap");
-    field = cv2.warpPerspective(out, warpMatrix, tuple(fieldSize));
-    plots.append(field);
-    out = field;
-    t.end();
-    */
-    //===============================================================================
     auto start = tick::now();
     cap >> Gframe; // get a new frame from camera
     cv::Mat warpedFrame = Gframe.clone();//trocar pelo tamanho
     cv::warpPerspective(Gframe,warpedFrame,warpMatrix,Gframe.size(),cv::INTER_NEAREST,
                         cv::BORDER_CONSTANT, cv::Scalar() );
-
 
     Gframe = warpedFrame;
     warpedFrame.release();
@@ -164,8 +105,6 @@ int main(int argc, char *argv[]){
     colorDetection(Gframe, bin,hsv,tgt, colors , 3);
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
-    //std::vector<cv::Vec3f> circles;
-
     findPos(bin, Gframe, contours, hierarchy, root, FIELD_MM);
     finish = tick::now();
     diff = finish - start;
@@ -175,20 +114,18 @@ int main(int argc, char *argv[]){
     cv::Mat robots;
     std::vector<cv::Vec3f> circles;
     detectCircles(Gframe,robots, circles, root,FIELD_MM);
+    for( size_t i = 0; i < circles.size(); i++ ) {
+      cv::Vec3i c = circles[i];
+      cv::circle( robots, cv::Point(c[0], c[1]), c[2], cv::Scalar(0,0,255), 3, cv::LINE_AA);
+      cv::circle( robots, cv::Point(c[0], c[1]), 2, cv::Scalar(0,255,0), 3, cv::LINE_AA);
+    }
     finish = tick::now();
     diff = finish - start;
     times[2] = (double)std::chrono::duration_cast<ms>(diff).count();
     //===============================================================================
-
-
-    cv::imshow("Frame",Gframe);
-
     start = tick::now();
     int k = cv::waitKey(1);
-    //int k = 0;
-    finish = tick::now();
-    diff = finish - start;
-    times[3] = (double)std::chrono::duration_cast<ms>(diff).count();
+
     if (k == 27 || k == 'q')
       break;
     else if(k == 'f'){
@@ -204,10 +141,14 @@ int main(int argc, char *argv[]){
       //função de escrever no json
       saveInJson(root);
     }
-
+    cv::imshow("Frame",Gframe);
     cv::imshow("Bola", tgt);
     cv::imshow("HSV", hsv);
-
+    cv::imshow("detected circles", robots);
+    finish = tick::now();
+    diff = finish - start;
+    times[3] = (double)std::chrono::duration_cast<ms>(diff).count();
+    //===============================================================================
     auto finish_total = tick::now();
     diff = finish_total - start_total;
     double time_total = (double)std::chrono::duration_cast<ms>(diff).count();
