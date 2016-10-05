@@ -78,7 +78,7 @@ int main(int argc, char *argv[]){
                     root.get("colors",0)["yellow"][2].asInt()),
                   };
 
-  cv::Mat warpMatrix =  fieldCornersUpdated(fieldCorners, frameSize);
+  cv::Mat warpMatrix =  fieldCornersUpdated(fieldCorners, fieldSize);
   std::vector<double> times(10);
   cv::Mat bin, hsv, tgt;
   //Create a window
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]){
     auto start = tick::now();
     cap >> Gframe; // get a new frame from camera
     cv::Mat warpedFrame = Gframe.clone();//trocar pelo tamanho
-    cv::warpPerspective(Gframe,warpedFrame,warpMatrix,Gframe.size(),cv::INTER_NEAREST,
+    cv::warpPerspective(Gframe,warpedFrame,warpMatrix,fieldSize,cv::INTER_NEAREST,
                         cv::BORDER_CONSTANT, cv::Scalar() );
 
     Gframe = warpedFrame;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]){
       cv::circle( robots_draw, cv::Point(c[0], c[1]), c[2], cv::Scalar(0,0,255), 3, cv::LINE_AA);
       cv::circle( robots_draw, cv::Point(c[0], c[1]), 2, cv::Scalar(0,255,0), 3, cv::LINE_AA);
     }
-    std::vector<cv::Scalar> robots = classifyRobots(circleMask, circleWarpSize, circles, 
+    std::vector<cv::Scalar> robots = classifyRobots(circleMask, circleWarpSize, circles,
                                                     colors, root, FIELD_MM);
     finish = tick::now();
     diff = finish - start;
@@ -133,9 +133,7 @@ int main(int argc, char *argv[]){
     else if(k == 'f'){
       state = 'f';
       actionPickCorners(cap, root);
-      warpMatrix = fieldCornersUpdated(fieldCorners, frameSize);
-      cv::warpPerspective(Gframe,warpedFrame,warpMatrix,fieldSize,cv::INTER_LINEAR,
-                          cv::BORDER_CONSTANT, cv::Scalar() );
+      warpMatrix = fieldCornersUpdated(fieldCorners, fieldSize);
     }else if(k == 'c'){
       state = 'c';
       actionConfigureColors(cap,root);
