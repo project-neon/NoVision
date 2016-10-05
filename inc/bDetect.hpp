@@ -32,6 +32,6 @@ cv::Scalar findPos(cv::Mat &src,cv::Mat &tgt, std::vector<std::vector<cv::Point>
 void saveInJson(Json::Value root);
 bool detectCircles(cv::Mat &src,cv::Mat &tgt, std::vector<cv::Vec3f> &circles,
               Json::Value &root,float k);
-std::vector<cv::Scalar> classifyRobots(cv::Mat mask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
+std::vector<cv::Scalar> classifyRobots(cv::Mat &circlemask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
 			  Json::Value &root, float k);
 int matchColorHSV(cv::Scalar color, cv::Scalar colors[], std::vector<int> excludecolors);

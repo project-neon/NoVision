@@ -87,7 +87,7 @@ cv::Scalar findPos(cv::Mat &src,cv::Mat &tgt, std::vector<std::vector<cv::Point>
 		root["ball_y"] = (int)(center[bestBall].y/k);
 		ball_prop = cv::Scalar((int)(center[bestBall].x/k), (int)(center[bestBall].y/k), (int)(radius[bestBall]*k));
 	}
-	
+
 	return ball_prop;
 }
 
@@ -258,7 +258,7 @@ void actionConfigureColors(cv::VideoCapture &cap, Json::Value &root) {
     if( k==27 || k == 'q') {
       state = 'd';
       break;
-    }else if( k >= 49 && k <= 53) {
+    }else if( k >= 49 && k <= 54) {
       selectedColor = k - 49;
     }else if(k == 's') {
       //função de gravar no json
@@ -333,7 +333,7 @@ bool detectCircles(cv::Mat &src,cv::Mat &tgt, std::vector<cv::Vec3f> &circles,
     return true;
 }
 
-std::vector<cv::Scalar> classifyRobots(cv::Mat mask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
+std::vector<cv::Scalar> classifyRobots(cv::Mat &circlemask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
 						Json::Value &root, float k) {
 		std::vector<cv::Scalar> robots;
 	    for( size_t i = 0; i < circles.size(); i++ ) {
@@ -350,44 +350,48 @@ std::vector<cv::Scalar> classifyRobots(cv::Mat mask, int warpSize, std::vector<c
 	           	std::cout << "!!! Exceeds boundaries" << std::endl;
 	    		continue;
         	}
-		    cv::Mat roi = Gframe( cv::Rect(cv::Point(x1,y1), cv::Point(x2,y2) ) );
+		    cv::Mat roi = Gframe( cv::Rect(cv::Point(x1,y1), cv::Point(x2,y2) ) ).clone();
 		    cv::cvtColor(roi, roi, cv::COLOR_BGR2HSV);
-			cv::resize(roi, roi, cv::Size(warpSize, warpSize), 0, 0, CV_INTER_AREA);
-			cv::GaussianBlur(roi, roi, cv::Size(3, 3), 0);
-			cv::Scalar meanBigCircle = cv::mean(roi, mask);
-			std::vector<int> excludecolors(6);
-			excludecolors[0] = excludecolors[1] = excludecolors[2] = excludecolors[3] = 
-			excludecolors[4] = excludecolors[5] = 0;
-			int color_primary = matchColorHSV(meanBigCircle, colors, excludecolors);
-			if(color_primary != 0 && color_primary != 5)
-				continue;
-			cv::Mat binMask;
-			cv::inRange(roi, cv::Scalar(colors[color_primary][0] - 20, colors[color_primary][1] - 20, colors[color_primary][2] - 20),
-      		cv::Scalar(colors[color_primary][0]  + 21 , colors[color_primary][1]  + 21, colors[color_primary][2]  + 21), binMask);
-			cv::bitwise_not(binMask,binMask);
-			cv::bitwise_and(binMask, binMask, mask);
-			cv::erode(binMask, binMask, cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5, 5), cv::Point(0,0)));
-			cv::dilate(binMask, binMask, cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5, 5), cv::Point(0,0)));
-			cv::Moments m = cv::moments(binMask);
-			if(m.m00 = 0.0)
-				continue;	
-			cv::Scalar meanSmallCircle = cv::mean(roi,binMask);
-			excludecolors[0] = 1;
-			excludecolors[5] = 1;
-			int color_secondary = matchColorHSV(meanSmallCircle, colors, excludecolors);
-			int robot_id = 10*color_primary+color_secondary;	
-			int cent = warpSize / 2;
-			double dx = cent - m.m10 / m.m00;
-			double dy = cent - m.m01 / m.m00;
-			cv::cvtColor(binMask, binMask, cv::COLOR_GRAY2RGB);
-			double phi = atan2(dx, dy);
-			dx = sin(phi)*200;
-			dy = cos(phi)*200;
-			cv::line(binMask, cv::Point(int(cent), int(cent)), cv::Point(int(cent + dx), int(cent + dy)),
-				cv::Scalar(0, 0, 255), 1);
-			cv::Scalar robot(robot_id,c[0],c[1],phi);
-			robots.push_back(robot);
-			cv::imshow("test", binMask);
+				cv::resize(roi, roi, cv::Size(warpSize, warpSize), 0, 0, CV_INTER_AREA);
+				cv::GaussianBlur(roi, roi, cv::Size(3, 3), 0);
+				cv::imshow("mascara circular", circlemask);
+				cv::Scalar meanBigCircle = cv::mean(roi, circlemask);
+				std::vector<int> excludecolors(6);
+				excludecolors[0] = excludecolors[1] = excludecolors[2] = excludecolors[3] =
+				excludecolors[4] = excludecolors[5] = 0;
+				int color_primary = matchColorHSV(meanBigCircle, colors, excludecolors);
+				// if(color_primary != 0 && color_primary != 5)
+				// 	continue;
+				cv::Mat binMask;
+				cv::inRange(roi, cv::Scalar(colors[color_primary][0] - 20, colors[color_primary][1] - 20, colors[color_primary][2] - 20),
+	      cv::Scalar(colors[color_primary][0]  + 21 , colors[color_primary][1]  + 21, colors[color_primary][2]  + 21), binMask);
+				cv::imshow("test1", binMask);
+				cv::bitwise_not(binMask,binMask);
+				cv::imshow("test2", binMask);
+				cv::bitwise_and(binMask, binMask, circlemask);
+				cv::imshow("test3", binMask);
+				cv::erode(binMask, binMask, cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5, 5), cv::Point(0,0)));
+				cv::dilate(binMask, binMask, cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5, 5), cv::Point(0,0)));
+				cv::Moments m = cv::moments(binMask);
+				if(m.m00 = 0.0)
+					continue;
+				cv::Scalar meanSmallCircle = cv::mean(roi,binMask);
+				excludecolors[0] = 1;
+				excludecolors[5] = 1;
+				int color_secondary = matchColorHSV(meanSmallCircle, colors, excludecolors);
+				int robot_id = 10*color_primary+color_secondary;
+				int cent = warpSize / 2;
+				double dx = cent - m.m10 / m.m00;
+				double dy = cent - m.m01 / m.m00;
+				cv::cvtColor(binMask, binMask, cv::COLOR_GRAY2RGB);
+				double phi = atan2(dx, dy);
+				dx = sin(phi)*200;
+				dy = cos(phi)*200;
+				cv::line(binMask, cv::Point(int(cent), int(cent)), cv::Point(int(cent + dx), int(cent + dy)),
+					cv::Scalar(0, 0, 255), 1);
+				cv::Scalar robot(robot_id,c[0],c[1],phi);
+				robots.push_back(robot);
+				cv::imshow("test", binMask);
         }
         return robots;
 }

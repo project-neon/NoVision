@@ -6,7 +6,7 @@
    "cameraRes" : [ 720, 480 ],
    "circleWarpSize" : 100,
    "colors" : {
-      "blue" : [ 28, 244, 213 ],
+      "blue" : [ 86, 175, 148 ],
       "green" : [ 0, 0, 0 ],
       "orange" : [ 29, 224, 235 ],
       "purple" : [ 131, 106, 0 ],

@@ -18,10 +18,11 @@ int main(int argc, char *argv[]){
   int circleWarpSize = root.get("circleWarpSize", 0).asInt();
   // Initialize Static Masks
   // This mask is used to exclude outer area of circles detected in HoughCircles
-  cv::Mat circleMask(circleWarpSize,circleWarpSize,CV_8UC1,cv::Scalar(1,1,1));
+  cv::Mat circleMask(circleWarpSize,circleWarpSize,CV_8UC1,cv::Scalar(0,0,0));
   int halfMaskSize = circleWarpSize / 2;
   cv::circle(circleMask, cv::Point(circleWarpSize / 2, circleWarpSize / 2),
             (int)(circleWarpSize / 2.5), cv::Scalar(255,255,255), -1, 8 , 0 );
+  cv::imshow("dkjhgfdksfd", circleMask);
 
   // Constant that multiplied by a unit in mm get the size in pc
   float FIELD_MM = (float)(fieldSize.width) / (float)(fieldSizeMM.width);
