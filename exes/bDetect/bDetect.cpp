@@ -33,21 +33,21 @@ void createTrackBars(){
 }
 
 //Function to create a color mask and "cut" the ball in the source image
-void colorDetection(cv::Mat src, cv::Mat &mask, cv::Mat &hsv, cv::Mat &tgt, cv::Scalar colors[], int it){
+void colorDetection(cv::Mat src, cv::Mat &mask, cv::Mat &tgt, cv::Scalar colors[], int it){
 	cv::Mat thrs;
 	//3-channel binary mask
 	cv::inRange(GframeHSV, cv::Scalar(colors[2][0] - infLimitH, colors[2][1] - infLimitS, colors[2][2] - infLimitV),
               cv::Scalar(colors[2][0]  + supLimitH + 1 , colors[2][1]  + supLimitS + 1, colors[2][2]  + supLimitV + 1), mask);
 	//image erosion
-	cv::Mat element = cv::getStructuringElement( cv::MORPH_RECT,cv::Size( 7,7 ),cv::Point( -1, -1 ) );
-	cv::Mat element2 = cv::getStructuringElement( cv::MORPH_RECT,cv::Size( 5,5 ),cv::Point( -1, -1 ) );
+	cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,cv::Size( 5,5 ),cv::Point( -1, -1 ) );
+	cv::Mat element2 = cv::getStructuringElement( cv::MORPH_ELLIPSE,cv::Size( 5,5 ),cv::Point( -1, -1 ) );
 	cv::morphologyEx( mask, mask, cv::MORPH_CLOSE, element);
 	cv::morphologyEx( mask, mask, cv::MORPH_OPEN, element2);
 
-	//mask aplication
-	cv::Mat mask3[] = { mask,mask,mask };
-	cv::merge(mask3, 3, thrs);
-	cv::bitwise_and(thrs, src, tgt);
+	// //mask aplication
+	// cv::Mat mask3[] = { mask,mask,mask };
+	// cv::merge(mask3, 3, thrs);
+	// cv::bitwise_and(thrs, src, tgt);
 }
 
 //Function to find the ball position in the screen
@@ -112,7 +112,6 @@ void actionPickCorners(cv::VideoCapture &cap, Json::Value &root) {
 	cv::setMouseCallback("pickCorners", CallBackFunc);
 	for(;;) {
 		int k = cv::waitKey(30);
-		std::cout << k << std::endl;
 		if (k == 27 || k == 'q'){
 			state = 'd';
 			break;
@@ -337,7 +336,7 @@ std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scal
 		std::vector<cv::Scalar> robots;
 	    for( size_t i = 0; i < circles.size(); i++ ) {
 	    	cv::Vec3i c = circles[i];
-	        if(c[2] < 50/2 * k)
+	        if(c[2] < 60/2 * k)
 	        	continue;
 	        if(c[2] > 90/2 * k)
 	        	continue;
@@ -351,9 +350,9 @@ std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scal
         	}
 		    cv::Mat roi = GframeHSV( cv::Rect(cv::Point(x1,y1), cv::Point(x2,y2) ) ).clone();
 				cv::resize(roi, roi, cv::Size(CircleWarpSize, CircleWarpSize), 0, 0, CV_INTER_AREA);
-				cv::imshow("mascara circular", roi);
+				//cv::imshow("mascara circular", roi);
 				cv::Scalar meanBigCircle = cv::mean(roi, circleMask.clone());
-				std::cout << meanBigCircle[0] << ',' << meanBigCircle[1] << ',' << meanBigCircle[2] << ',' << std::endl;
+				//std::cout << meanBigCircle[0] << ',' << meanBigCircle[1] << ',' << meanBigCircle[2] << ',' << std::endl;
 				std::vector<int> excludecolors(6);
 				excludecolors[0] = excludecolors[1] = excludecolors[2] = excludecolors[3] =
 				excludecolors[4] = excludecolors[5] = 0;
@@ -363,16 +362,16 @@ std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scal
 				cv::Mat binMask;
 				cv::inRange(roi, cv::Scalar(colors[color_primary][0] - 20, colors[color_primary][1] - 20*2, colors[color_primary][2] - 20*2),
 	      cv::Scalar(colors[color_primary][0]  + 21 , colors[color_primary][1]  + 21*2, colors[color_primary][2]  + 21*2), binMask);
-				cv::imshow("test1", binMask);
+				//cv::imshow("test1", binMask);
 				cv::bitwise_not(binMask,binMask);
-				cv::imshow("test2", binMask);
+				//cv::imshow("test2", binMask);
 				cv::bitwise_and(binMask,  circleMask, binMask);
 				cv::erode(binMask, binMask, cv::getStructuringElement(cv::MORPH_ELLIPSE ,cv::Size(3, 3), cv::Point(0,0)));
 				cv::erode(binMask, binMask, cv::getStructuringElement(cv::MORPH_ELLIPSE ,cv::Size(3, 3), cv::Point(0,0)));
 				cv::erode(binMask, binMask, cv::getStructuringElement(cv::MORPH_ELLIPSE ,cv::Size(3, 3), cv::Point(0,0)));
 				cv::dilate(binMask, binMask, cv::getStructuringElement(cv::MORPH_ELLIPSE ,cv::Size(3, 3), cv::Point(0,0)));
 				// small circle mask
-				cv::imshow("test3", binMask);
+				//cv::imshow("test3", binMask);
 
 				cv::Moments m = cv::moments(binMask);
 				if(m.m00 == 0)
@@ -387,16 +386,17 @@ std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scal
 				// dx = (x_centro massa big - x_centro massa small)
 				double dx = cent - m.m10 / m.m00;
 				double dy = cent - m.m01 / m.m00;
-				std::cout << m.m00 <<',' <<m.m10<<','<<m.m01 << std::endl;;
+				//std::cout << m.m00 <<',' <<m.m10<<','<<m.m01 << std::endl;;
 
 				cv::cvtColor(binMask, binMask, cv::COLOR_GRAY2RGB);
 				double phi = atan2(dx, dy);
-				std::cout << phi << std::endl;
 				dx = sin(phi)*50;
 				dy = cos(phi)*50;
+				phi = (-atan2(dx, dy) )*180/PI +180;
 				cv::line(binMask, cv::Point(int(cent), int(cent)), cv::Point(int(cent + dx), int(cent + dy)),
 				cv::Scalar(0, 0, 255), 1);
 				cv::Scalar robot(robot_id,c[0],c[1],phi);
+				//std::cout << phi << std::endl;
 				robots.push_back(robot);
 				cv::imshow("test", binMask);
         }

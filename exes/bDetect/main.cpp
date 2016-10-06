@@ -18,7 +18,6 @@ int main(int argc, char *argv[]){
   // This mask is used to exclude outer area of circles detected in HoughCircles
   cv::circle(circleMask, cv::Point(CircleWarpSize / 2, CircleWarpSize / 2),
             (int)(CircleWarpSize / 2.5), cv::Scalar(255,255,255), -1, 8 , 0 );
-  cv::imshow("dkjhgfdksfd", circleMask);
 
   // Constant that multiplied by a unit in mm get the size in pc
   float FIELD_MM = (float)(fieldSize.width) / (float)(fieldSizeMM.width);
@@ -107,34 +106,42 @@ int main(int argc, char *argv[]){
     start = tick::now();
     cv::cvtColor(Gframe, GframeHSV, cv::COLOR_BGR2HSV);
     cv::GaussianBlur(GframeHSV, GframeHSV, cv::Size(3, 3),0,0);
-    colorDetection(GframeHSV, bin,hsv,tgt, colors , 3);
+    finish = tick::now();
+    diff = finish - start;
+    times[1] = (double)std::chrono::duration_cast<ms>(diff).count();
+    start = tick::now();
+    colorDetection(GframeHSV, bin,tgt, colors , 3);
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
     findPos(bin, Gframe, contours, hierarchy, root, FIELD_MM);
     finish = tick::now();
     diff = finish - start;
-    times[1] = (double)std::chrono::duration_cast<ms>(diff).count();
+    times[2] = (double)std::chrono::duration_cast<ms>(diff).count();
     //===============================================================================
     start = tick::now();
     cv::Mat robots_draw;
     std::vector<cv::Vec3f> circles;
     detectCircles(Gframe,robots_draw, circles, root,FIELD_MM);
+    finish = tick::now();
+    diff = finish - start;
+    times[3] = (double)std::chrono::duration_cast<ms>(diff).count();
+    start = tick::now();
     for( size_t i = 0; i < circles.size(); i++ ) {
       cv::Vec3i c = circles[i];
       cv::circle( robots_draw, cv::Point(c[0], c[1]), c[2], cv::Scalar(0,0,255), 3, cv::LINE_AA);
       cv::circle( robots_draw, cv::Point(c[0], c[1]), 2, cv::Scalar(0,255,0), 3, cv::LINE_AA);
     }
     std::vector<cv::Scalar> robots = classifyRobots(circles,colors, root, FIELD_MM);
+    finish = tick::now();
+    diff = finish - start;
+    times[4] = (double)std::chrono::duration_cast<ms>(diff).count();
+    start = tick::now();
     for( size_t i = 0; i < robots.size(); i++ ) {
       std::stringstream ss;
       ss << robots[i][0] <<" , "<< robots[i][3] << std::endl;
       cv::putText(Gframe, ss.str(), cv::Point(robots[i][1],robots[i][2]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0), 2, cv::LINE_8, false);
     }
-    finish = tick::now();
-    diff = finish - start;
-    times[2] = (double)std::chrono::duration_cast<ms>(diff).count();
     //===============================================================================
-    start = tick::now();
     int k = cv::waitKey(1);
 
     if (k == 27 || k == 'q')
@@ -157,19 +164,19 @@ int main(int argc, char *argv[]){
       saveInJson(root);
     }
     cv::imshow("Frame",Gframe);
-    cv::imshow("Bola", tgt);
-    cv::imshow("HSV", GframeHSV);
+    // cv::imshow("Bola", tgt);
+    // cv::imshow("HSV", GframeHSV);
     finish = tick::now();
     diff = finish - start;
-    times[3] = (double)std::chrono::duration_cast<ms>(diff).count();
+    times[5] = (double)std::chrono::duration_cast<ms>(diff).count();
     //===============================================================================
     auto finish_total = tick::now();
     diff = finish_total - start_total;
     double time_total = (double)std::chrono::duration_cast<ms>(diff).count();
-    //
-    // std::cout <<"Tempo total: " << time_total << "\tLendo Frame: " << times[0] << "\tDetectando a bolinha: " <<
-    // times[1] << "\tDetectando os robos: " << times[2] << "\tRestante: " <<
-    // times[3] << std::endl;
+
+    std::cout <<"total: " << time_total << "\tcap+warp: " << times[0] << "\thsv+blur: " <<
+    times[1] << "\tball: " << times[2] << "\tHcircles: " <<
+    times[3]<< "\trobots: " << times[4] << "\tHprint: "<< times[5]<< std::endl;
 
   }
   return 0;
