@@ -5,6 +5,7 @@
 #include <vector>
 #include <math.h>
 #define PI 3.14159265
+#define CircleWarpSize 100
 
 #include <opencv2/opencv.hpp>
 #include <json/json.h>
@@ -16,8 +17,9 @@ extern int colorH, colorS, colorV;
 extern int supLimitH, supLimitS, supLimitV, infLimitH, infLimitS, infLimitV;
 extern double resize;
 extern int selectedCorner;
-extern cv::Mat Gframe;
+extern cv::Mat Gframe, GframeHSV;
 extern cv::Point2f fieldCorners[4];
+extern cv::Mat circleMask;
 
 void on_trackbar(int);
 void changeCameraProp(std::string key, std::string value, Json::Value root);
@@ -32,6 +34,6 @@ cv::Scalar findPos(cv::Mat &src,cv::Mat &tgt, std::vector<std::vector<cv::Point>
 void saveInJson(Json::Value root);
 bool detectCircles(cv::Mat &src,cv::Mat &tgt, std::vector<cv::Vec3f> &circles,
               Json::Value &root,float k);
-std::vector<cv::Scalar> classifyRobots(cv::Mat &circlemask, int warpSize, std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
+std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scalar colors[],
 			  Json::Value &root, float k);
 int matchColorHSV(cv::Scalar color, cv::Scalar colors[], std::vector<int> excludecolors);

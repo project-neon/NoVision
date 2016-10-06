@@ -9,19 +9,15 @@ int main(int argc, char *argv[]){
   Json::Value root;
   std::ifstream Config("../../../inc/configs.json");
   Config >> root;
-  std::cout << "teste" << std::endl;
   cv::Size fieldSize(root.get("fieldSize", 0)[0].asInt(),
                      root.get("fieldSize", 0)[1].asInt() );
   cv::Size fieldSizeMM(root.get("fieldSizeMM", 0)[0].asInt(),
                               root.get("fieldSizeMM", 0)[1].asInt() );
 
-  int circleWarpSize = root.get("circleWarpSize", 0).asInt();
   // Initialize Static Masks
   // This mask is used to exclude outer area of circles detected in HoughCircles
-  cv::Mat circleMask(circleWarpSize,circleWarpSize,CV_8UC1,cv::Scalar(0,0,0));
-  int halfMaskSize = circleWarpSize / 2;
-  cv::circle(circleMask, cv::Point(circleWarpSize / 2, circleWarpSize / 2),
-            (int)(circleWarpSize / 2.5), cv::Scalar(255,255,255), -1, 8 , 0 );
+  cv::circle(circleMask, cv::Point(CircleWarpSize / 2, CircleWarpSize / 2),
+            (int)(CircleWarpSize / 2.5), cv::Scalar(255,255,255), -1, 8 , 0 );
   cv::imshow("dkjhgfdksfd", circleMask);
 
   // Constant that multiplied by a unit in mm get the size in pc
@@ -36,6 +32,12 @@ int main(int argc, char *argv[]){
   changeCameraProp("exposure_auto_priority", "0", root);
   changeCameraProp("exposure_auto", "1", root);
   changeCameraProp("exposure_absolute", "75", root);
+  supLimitH = root.get("ballColorRanges",0)["hue"][0].asInt();
+  supLimitS = root.get("ballColorRanges",0)["saturation"][0].asInt();
+  supLimitV = root.get("ballColorRanges",0)["value"][0].asInt();
+  infLimitH = root.get("ballColorRanges",0)["hue"][1].asInt();
+  infLimitS = root.get("ballColorRanges",0)["saturation"][1].asInt();
+  infLimitV = root.get("ballColorRanges",0)["value"][1].asInt();
   createTrackBars();
 
   std::string camera = root.get("camera", 1).asString();
@@ -103,7 +105,9 @@ int main(int argc, char *argv[]){
 
     //===============================================================================
     start = tick::now();
-    colorDetection(Gframe, bin,hsv,tgt, colors , 3);
+    cv::cvtColor(Gframe, GframeHSV, cv::COLOR_BGR2HSV);
+    cv::GaussianBlur(GframeHSV, GframeHSV, cv::Size(3, 3),0,0);
+    colorDetection(GframeHSV, bin,hsv,tgt, colors , 3);
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
     findPos(bin, Gframe, contours, hierarchy, root, FIELD_MM);
@@ -120,8 +124,12 @@ int main(int argc, char *argv[]){
       cv::circle( robots_draw, cv::Point(c[0], c[1]), c[2], cv::Scalar(0,0,255), 3, cv::LINE_AA);
       cv::circle( robots_draw, cv::Point(c[0], c[1]), 2, cv::Scalar(0,255,0), 3, cv::LINE_AA);
     }
-    std::vector<cv::Scalar> robots = classifyRobots(circleMask, circleWarpSize, circles,
-                                                    colors, root, FIELD_MM);
+    std::vector<cv::Scalar> robots = classifyRobots(circles,colors, root, FIELD_MM);
+    for( size_t i = 0; i < robots.size(); i++ ) {
+      std::stringstream ss;
+      ss << robots[i][0] <<" , "<< robots[i][3] << std::endl;
+      cv::putText(Gframe, ss.str(), cv::Point(robots[i][1],robots[i][2]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0), 2, cv::LINE_8, false);
+    }
     finish = tick::now();
     diff = finish - start;
     times[2] = (double)std::chrono::duration_cast<ms>(diff).count();
@@ -140,12 +148,17 @@ int main(int argc, char *argv[]){
       actionConfigureColors(cap,root);
     }else if(k == 's') {
       //função de escrever no json
+      root["ballColorRanges"]["hue"][0] = supLimitH;
+      root["ballColorRanges"]["hue"][1] = infLimitH;
+      root["ballColorRanges"]["saturation"][0] = supLimitS ;
+      root["ballColorRanges"]["saturation"][1] = infLimitS ;
+      root["ballColorRanges"]["value"][0] = supLimitV;
+      root["ballColorRanges"]["value"][1] = infLimitV;
       saveInJson(root);
     }
     cv::imshow("Frame",Gframe);
     cv::imshow("Bola", tgt);
-    cv::imshow("HSV", hsv);
-    cv::imshow("detected circles", robots_draw);
+    cv::imshow("HSV", GframeHSV);
     finish = tick::now();
     diff = finish - start;
     times[3] = (double)std::chrono::duration_cast<ms>(diff).count();
@@ -153,10 +166,10 @@ int main(int argc, char *argv[]){
     auto finish_total = tick::now();
     diff = finish_total - start_total;
     double time_total = (double)std::chrono::duration_cast<ms>(diff).count();
-
-    std::cout <<"Tempo total: " << time_total << "\tLendo Frame: " << times[0] << "\tDetectando a bolinha: " <<
-    times[1] << "\tDetectando os robos: " << times[2] << "\tRestante: " <<
-    times[3] << std::endl;
+    //
+    // std::cout <<"Tempo total: " << time_total << "\tLendo Frame: " << times[0] << "\tDetectando a bolinha: " <<
+    // times[1] << "\tDetectando os robos: " << times[2] << "\tRestante: " <<
+    // times[3] << std::endl;
 
   }
   return 0;

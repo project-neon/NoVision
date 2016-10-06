@@ -1,9 +1,14 @@
 {
+   "ballColorRanges" : {
+      "hue" : [ 60, 27 ],
+      "saturation" : [ 41, 67 ],
+      "value" : [ 119, 128 ]
+   },
    "ball_radius" : 19,
-   "ball_x" : 1293,
-   "ball_y" : 725,
+   "ball_x" : 212,
+   "ball_y" : 1231,
    "camera" : "/dev/video0",
-   "cameraRes" : [ 720, 480 ],
+   "cameraRes" : [ 1280, 720 ],
    "circleWarpSize" : 100,
    "colors" : {
       "blue" : [ 86, 175, 148 ],
@@ -11,15 +16,15 @@
       "orange" : [ 29, 224, 235 ],
       "purple" : [ 131, 106, 0 ],
       "red" : [ 163, 137, 0 ],
-      "yellow" : [ 126, 165, 0 ]
+      "yellow" : [ 28, 117, 234 ]
    },
    "fieldCorners" : [
-      [ 70, 22 ],
-      [ 620, 34 ],
-      [ 602, 464 ],
-      [ 52, 446 ]
+      [ 288, 38 ],
+      [ 1200, 66 ],
+      [ 1138, 716 ],
+      [ 314, 636 ]
    ],
-   "fieldSize" : [ 510, 390 ],
+   "fieldSize" : [ 1020, 780 ],
    "fieldSizeMM" : [ 1700, 1300 ],
    "imageScale" : 1,
    "robot10" : [ "[u'yellow', [0, 0]]", "393.5", "180.5", "-0.77294301786" ],
