@@ -4,7 +4,7 @@
       "saturation" : [ 41, 67 ],
       "value" : [ 119, 128 ]
    },
-   "ball_radius" : 19,
+   "ball_radius" : 31,
    "ball_x" : 535,
    "ball_y" : 1244,
    "camera" : "/dev/video0",

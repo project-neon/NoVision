@@ -6,6 +6,8 @@ using tick = std::chrono::steady_clock;
 
 int main(int argc, char *argv[]){
   //loading and testing json file
+  bool debug_enable = false;
+  bool debug_enable1 = false;
   Json::Value root;
   std::ifstream Config("../../../inc/configs.json");
   Config >> root;
@@ -83,6 +85,11 @@ int main(int argc, char *argv[]){
   cv::Mat warpMatrix =  fieldCornersUpdated(fieldCorners, fieldSize);
   std::vector<double> times(10);
   cv::Mat bin, hsv, tgt;
+
+  //String com todos os dados para o socket
+  std::stringstream ss_socket;
+  cv::Scalar Ball_prop(0,0,0);
+
   //Create a window
   cv::namedWindow("Frame", CV_WINDOW_AUTOSIZE);
   //set the callback function for any mouse event
@@ -90,8 +97,12 @@ int main(int argc, char *argv[]){
 
   for(;;){
     auto start_total = tick::now();
-    auto start = tick::now();
+
+    //RECEBE O FRAME
     cap >> Gframe; // get a new frame from camera
+    auto start = tick::now();
+
+    //RECORTA E REDIMENSION O FRAME NA AREA DO CAMPO
     cv::Mat warpedFrame = Gframe.clone();//trocar pelo tamanho
     cv::warpPerspective(Gframe,warpedFrame,warpMatrix,fieldSize,cv::INTER_NEAREST,
                         cv::BORDER_CONSTANT, cv::Scalar() );
@@ -102,22 +113,25 @@ int main(int argc, char *argv[]){
     auto diff = finish - start;
     times[0] = (double)std::chrono::duration_cast<ms>(diff).count();
 
-    //===============================================================================
+    //FAZ A TRANSFORMADA DE COR E APLICA BLUR
     start = tick::now();
     cv::cvtColor(Gframe, GframeHSV, cv::COLOR_BGR2HSV);
     cv::GaussianBlur(GframeHSV, GframeHSV, cv::Size(3, 3),0,0);
     finish = tick::now();
     diff = finish - start;
     times[1] = (double)std::chrono::duration_cast<ms>(diff).count();
+
+    //ENCONTRAR BOLINHA
     start = tick::now();
     colorDetection(GframeHSV, bin,tgt, colors , 3);
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
-    findPos(bin, Gframe, contours, hierarchy, root, FIELD_MM);
+    Ball_prop = findPos(bin, Gframe, contours, hierarchy, root, FIELD_MM);
     finish = tick::now();
     diff = finish - start;
     times[2] = (double)std::chrono::duration_cast<ms>(diff).count();
-    //===============================================================================
+
+    //ENCONTRAR ROBOS
     start = tick::now();
     cv::Mat robots_draw;
     std::vector<cv::Vec3f> circles;
@@ -135,18 +149,28 @@ int main(int argc, char *argv[]){
     finish = tick::now();
     diff = finish - start;
     times[4] = (double)std::chrono::duration_cast<ms>(diff).count();
+
+    //ESCREVE NO FRAME AS POSIÇÕES
     start = tick::now();
     for( size_t i = 0; i < robots.size(); i++ ) {
       std::stringstream ss;
       ss << robots[i][0] <<" , "<< robots[i][3] << std::endl;
       cv::putText(Gframe, ss.str(), cv::Point(robots[i][1],robots[i][2]), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0), 2, cv::LINE_8, false);
     }
-    //===============================================================================
+    std::stringstream ss2;
+    ss2 << Ball_prop[0] <<" , "<< Ball_prop[1] << std::endl;
+    cv::putText(Gframe, ss2.str(), cv::Point(Ball_prop[0]*FIELD_MM,Ball_prop[1]*FIELD_MM), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2, cv::LINE_8, false);
+
+    //HANDLER DAS TECLAS
     int k = cv::waitKey(1);
 
     if (k == 27 || k == 'q')
       break;
-    else if(k == 'f'){
+    else if(k == 't'){
+      debug_enable = !debug_enable;
+    }else if(k == 'y'){
+      debug_enable1 = !debug_enable1;
+    }else if(k == 'f'){
       state = 'f';
       actionPickCorners(cap, root);
       warpMatrix = fieldCornersUpdated(fieldCorners, fieldSize);
@@ -164,7 +188,7 @@ int main(int argc, char *argv[]){
       saveInJson(root);
     }
     cv::imshow("Frame",Gframe);
-    // cv::imshow("Bola", tgt);
+    cv::imshow("Bola", bin);
     // cv::imshow("HSV", GframeHSV);
     finish = tick::now();
     diff = finish - start;
@@ -174,10 +198,16 @@ int main(int argc, char *argv[]){
     diff = finish_total - start_total;
     double time_total = (double)std::chrono::duration_cast<ms>(diff).count();
 
+    //DEBUG TIMER
+    if(debug_enable){
     std::cout <<"total: " << time_total << "\tcap+warp: " << times[0] << "\thsv+blur: " <<
     times[1] << "\tball: " << times[2] << "\tHcircles: " <<
-    times[3]<< "\trobots: " << times[4] << "\tHprint: "<< times[5]<< std::endl;
-
+    times[3]<< "\trobots: " << times[4] << "\tHprint: " << times[5] << std::endl;
+    }
+    if(debug_enable1){
+      // TODO: IMPRIMIR STRING COMO TODOS OS DADOS QUE SERAO PASSADOS NO SOCKET
+    }
+    // ss_socket <<robo; //NAO TA IMPLEMENTADO AINDA
   }
   return 0;
 }

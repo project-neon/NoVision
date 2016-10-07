@@ -39,10 +39,12 @@ void colorDetection(cv::Mat src, cv::Mat &mask, cv::Mat &tgt, cv::Scalar colors[
 	cv::inRange(GframeHSV, cv::Scalar(colors[2][0] - infLimitH, colors[2][1] - infLimitS, colors[2][2] - infLimitV),
               cv::Scalar(colors[2][0]  + supLimitH + 1 , colors[2][1]  + supLimitS + 1, colors[2][2]  + supLimitV + 1), mask);
 	//image erosion
+
+
 	cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,cv::Size( 5,5 ),cv::Point( -1, -1 ) );
 	cv::Mat element2 = cv::getStructuringElement( cv::MORPH_ELLIPSE,cv::Size( 5,5 ),cv::Point( -1, -1 ) );
-	cv::morphologyEx( mask, mask, cv::MORPH_CLOSE, element);
 	cv::morphologyEx( mask, mask, cv::MORPH_OPEN, element2);
+	cv::morphologyEx( mask, mask, cv::MORPH_CLOSE, element);
 
 	// //mask aplication
 	// cv::Mat mask3[] = { mask,mask,mask };
@@ -80,7 +82,7 @@ cv::Scalar findPos(cv::Mat &src,cv::Mat &tgt, std::vector<std::vector<cv::Point>
 	}
 	cv::Scalar ball_prop(-1,-1,-1);
 	if(ball != 0){
-		cv::circle( tgt, center[bestBall], (int)(radius[bestBall]*k), cv::Scalar(255,0,0), 2, 8, 0 );
+		cv::circle( tgt, center[bestBall], (int)(radius[bestBall]*k), cv::Scalar(0,0,255), 2, 8, 0 );
 		root["ball_x"] = (int)(center[bestBall].x/k);
 		root["ball_y"] = (int)(center[bestBall].y/k);
 		ball_prop = cv::Scalar((int)(center[bestBall].x/k), (int)(center[bestBall].y/k), (int)(radius[bestBall]*k));
@@ -336,6 +338,7 @@ std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scal
 		std::vector<cv::Scalar> robots;
 	    for( size_t i = 0; i < circles.size(); i++ ) {
 	    	cv::Vec3i c = circles[i];
+				std::cout <<"raio circ: " << c[2]/k << std::endl;
 	        if(c[2] < 60/2 * k)
 	        	continue;
 	        if(c[2] > 90/2 * k)
@@ -398,7 +401,7 @@ std::vector<cv::Scalar> classifyRobots(std::vector<cv::Vec3f> &circles, cv::Scal
 				cv::Scalar robot(robot_id,c[0],c[1],phi);
 				//std::cout << phi << std::endl;
 				robots.push_back(robot);
-				cv::imshow("test", binMask);
+				// cv::imshow("test", binMask);
         }
         return robots;
 }
@@ -418,3 +421,47 @@ int matchColorHSV(cv::Scalar color, cv::Scalar colors[], std::vector<int> exclud
 	}
 	return bestColor;
 }
+
+//
+//
+// #include "opencv2/core/core.hpp"
+// #include "opencv2/highgui/highgui.hpp""
+// #include "opencv2/imgproc/imgproc.hpp"
+// #include "iostream"
+// using namespace cv;
+// using namespace std;
+// int main( )
+// {
+//     Mat src;
+//     src = imread("shape.jpg", CV_LOAD_IMAGE_COLOR);
+//     Mat gray;
+//     cvtColor(src, gray, CV_BGR2GRAY);
+//     threshold(gray, gray,200, 255,THRESH_BINARY_INV); //Threshold the gray
+//     imshow("gray",gray);int largest_area=0;
+//     int largest_contour_index=0;
+//     Rect bounding_rect;
+//     vector<vector<Point>> contours; // Vector for storing contour
+//     vector<Vec4i> hierarchy;
+//     findContours( gray, contours, hierarchy,CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
+//     // iterate through each contour.
+//     for( int i = 0; i< contours.size(); i++ )
+//     {
+//         //  Find the area of contour
+//         double a=contourArea( contours[i],false);
+//         if(a>largest_area){
+//             largest_area=a;cout<<i<<" area  "<<a<<endl;
+//             // Store the index of largest contour
+//             largest_contour_index=i;
+//             // Find the bounding rectangle for biggest contour
+//             bounding_rect=boundingRect(contours[i]);
+//         }
+//     }
+//     Scalar color( 255,255,255);  // color of the contour in the
+//     //Draw the contour and rectangle
+//     drawContours( src, contours,largest_contour_index, color, CV_FILLED,8,hierarchy);
+//     rectangle(src, bounding_rect,  Scalar(0,255,0),2, 8,0);
+//     namedWindow( "Display window", CV_WINDOW_AUTOSIZE );
+//     imshow( "Display window", src );
+//     waitKey(0);
+//     return 0;
+// }
