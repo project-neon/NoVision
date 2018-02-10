@@ -1,0 +1,8 @@
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/rebuild_cache.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/edit_cache.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/graphicalClient.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/GenerateProto.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/client.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/logClient.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/sslvision.dir
+/home/joaop/GitHub/ssl-vision/build/CMakeFiles/vision.dir
